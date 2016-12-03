@@ -1,1 +1,2 @@
-# nextpresso1.9
+# nextpresso1.8
+Next generation sequencing analysis expression pipeline
