@@ -19,7 +19,7 @@ sub runSamtools(){
 	#$PATH.=":".$peakAnnotatorPath;
 	#$ENV{'PATH'}.=":".$peakAnnotatorPath;
 	
-	my $command="export PATH=\$PATH:".$samtoolsPath."; ";
+	my $command="LC_ALL=C; export LC_ALL; export PATH=\$PATH:".$samtoolsPath."; ";
 	#$command.="samtools view -h ".$bamFile." -o ".$samFile;
 	
 	# the awk command inserted in the line below is to avoid lines like the following:
@@ -55,7 +55,7 @@ sub runHtseqCount(){
 #**********if problems running htseq-count, follow Simon Anders suggestion below:
 #Install it locally to the user: 'python setup.py install --user'
 
-	my($extraPathsRequired,$mode,$minaqual,$featuretype,$idattr,$htseqcountPath,$htseqCountPythonpath,$GTF,
+	my($perl5lib,$extraPathsRequired,$mode,$minaqual,$featuretype,$idattr,$htseqcountPath,$htseqCountPythonpath,$GTF,
 	$library,$samFile,$htseqCountOutputFile)=@_;
 	
 	use Env qw(PATH);
@@ -66,7 +66,7 @@ sub runHtseqCount(){
 	#$command.="htseq-count ";
 	#$command.="python -m HTSeq.scripts.count ";
 
-	my $command="";
+	my $command="LC_ALL=C; export LC_ALL; export PERL5LIB=".$perl5lib.":\$PERL5LIB; ";
         
         if($extraPathsRequired ne "NO_EXTRA_PATHS"){
 		$extraPathsRequired=~ s/\'//g;

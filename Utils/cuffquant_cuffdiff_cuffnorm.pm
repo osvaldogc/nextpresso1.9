@@ -3,6 +3,7 @@
 # Author : Osvaldo Grana
 # Description: runs cuffquant, cuffdiff, cuffnorm and prepares preranked 'rnk' files for GSEA
 # v0.3		oct2016
+# v0.4		dic2016 - adds cumulative variance for the samples
 
 use strict;
 use warnings;
@@ -633,7 +634,7 @@ sub createGSEArnkFile(){
 		system("LC_ALL=C; export LC_ALL; sort -k2g --stable ".$outFileaux." -o ".$outFile."; rm -f ".$outFileaux);
 	}
 	else{
-		print STDERR "\n[ERROR createGSEArnkFiles]: $inFile file does not exist\n\n";
+		print STDERR "\n[ERROR createGSEArnkFiles_from_Cuffdiff]: ".$inFile." file does not exist\n\n";
 		exit(-1);		
 	}
 	
@@ -773,6 +774,8 @@ sub calculateCorrelationsAndPCA_GeneLevel(){
 		my $corrFile=$prefix.".pearsonCorrelationsAmongSamples.xls";
 		my $variance=$prefix.".proportionOfVariance.pdf";
 		my $PCAfile=$prefix.".samplesPCA.pdf";
+		my $cumVarFile=$prefix.".cumulativeVariance.xls";
+		
 		open(RSCRIPT,">",$Rscriptfile);	
 		print RSCRIPT "FPKMs=read.table(\"".$newFPKMTable."\",header=T)\n";
 		print RSCRIPT "dim(FPKMs)\n";
@@ -786,9 +789,14 @@ sub calculateCorrelationsAndPCA_GeneLevel(){
 		print RSCRIPT "pdf(\"".$variance."\")\n";
 		print RSCRIPT "screeplot(FPKMpc)\n";
 		print RSCRIPT "dev.off()\n";
+		#Cumulative variance
+		print RSCRIPT "eig <- (FPKMpc\$sdev)^2\n";
+		print RSCRIPT "variance <- eig*100/sum(eig)\n";
+		print RSCRIPT "cumvar <- cumsum(variance)\n";
+		print RSCRIPT "write.table(cumvar,file=\"".$cumVarFile."\",sep=\"\\t\",col.names=NA)\n";		
 		#PCA graph
 		print RSCRIPT "pdf(\"".$PCAfile."\")\n";
-		print RSCRIPT "rot <- FPKMpc\$r\n";
+		print RSCRIPT "rot <- FPKMpc\$r\n";		
 
 		#defines colors
 		#my @colors=("lightblue","lightgreen","lightpink","orange","blue","green");

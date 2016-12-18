@@ -36,5 +36,7 @@
 	</gsea>
 	<queueSystem>none</queueSystem>		
 	<queueName>none</queueName>
-	<multicore>2</multicore>	
+	<multicore>2</multicore>
+	<!-- The content of PERL5LIB is added to the PERL5LIB environment variable -->
+	<PERL5LIB>/home/osvaldo/GIT/nextpresso1.9/Utils</PERL5LIB>
 </configurationParameters>

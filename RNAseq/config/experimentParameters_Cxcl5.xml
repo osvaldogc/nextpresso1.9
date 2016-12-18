@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<experiment projectName="RNAseq_Cxcl5" workspace="/home/osvaldo/NGS/RNAseq_Cxcl5/Analysis_downsampling"
+<experiment projectName="RNAseq_Cxcl5" workspace="/home/osvaldo/NGS/RNAseq_Cxcl5/Analysis"
 referenceSequence="/home/osvaldo/NGS/REFERENCES/Mus_musculus/UCSC/mm9/Sequence/BowtieIndex/genome.fa"
 GTF="/home/osvaldo/NGS/REFERENCES/Mus_musculus/UCSC/mm9/Annotation/Archives/archive-2014-05-23-16-05-24/Genes/genes.gtf"
 pairedEnd="false" fileWithChecksumCodesToValidate="/home/osvaldo/NGS/RNAseq_Cxcl5/SAMPLES/checksum.codes.csv">
@@ -13,7 +13,7 @@ pairedEnd="false" fileWithChecksumCodesToValidate="/home/osvaldo/NGS/RNAseq_Cxcl
 			<nNucleotidesLeftEnd>3</nNucleotidesLeftEnd>
 			<nNucleotidesRightEnd>5</nNucleotidesRightEnd>
 		</trimming>
-		<downsampling do="true">
+		<downsampling do="false">
 			<seed>3</seed>
 			<nReads>32945150</nReads>
 		</downsampling>
@@ -30,7 +30,7 @@ pairedEnd="false" fileWithChecksumCodesToValidate="/home/osvaldo/NGS/RNAseq_Cxcl
 			<nNucleotidesLeftEnd>3</nNucleotidesLeftEnd>
 			<nNucleotidesRightEnd>5</nNucleotidesRightEnd>
 		</trimming>
-		<downsampling do="true">
+		<downsampling do="false">
 			<seed>3</seed>
 			<nReads>32945150</nReads>
 		</downsampling>
@@ -47,7 +47,7 @@ pairedEnd="false" fileWithChecksumCodesToValidate="/home/osvaldo/NGS/RNAseq_Cxcl
 			<nNucleotidesLeftEnd>3</nNucleotidesLeftEnd>
 			<nNucleotidesRightEnd>5</nNucleotidesRightEnd>
 		</trimming>
-		<downsampling do="true">
+		<downsampling do="false">
 			<seed>3</seed>
 			<nReads>32945150</nReads>
 		</downsampling>
@@ -81,7 +81,7 @@ pairedEnd="false" fileWithChecksumCodesToValidate="/home/osvaldo/NGS/RNAseq_Cxcl
 			<nNucleotidesLeftEnd>3</nNucleotidesLeftEnd>
 			<nNucleotidesRightEnd>5</nNucleotidesRightEnd>
 		</trimming>
-		<downsampling do="true">
+		<downsampling do="false">
 			<seed>3</seed>
 			<nReads>32945150</nReads>
 		</downsampling>

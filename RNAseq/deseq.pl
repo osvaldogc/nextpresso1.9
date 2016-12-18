@@ -3,6 +3,8 @@
 # Author: Osvaldo Grana
 # Description: runs DESeq
 # v0.1		apr2015
+# v0.2		dic2016 - adds cumulative variance for the samples
+#			- creates rnk file for GSEA
 
 use strict;
 use FindBin qw($Bin); #finds out script path
@@ -21,6 +23,7 @@ sub runDeseq($$$$$$$$$$);
 sub createFullTable($$$$);
 sub executeDESeqANDcomputeCorrelationAndPCA($$$$$$$$);
 sub createExcel($$$);
+sub createGSEArnkFile($$);
 sub help();
 
 main();
@@ -79,6 +82,7 @@ sub runDeseq($$$$$$$$$$){
 
 	createFullTable($deseqInputFiles,$tmpDir,$comparisonName,$deseqOutDir);
 	executeDESeqANDcomputeCorrelationAndPCA($nThreads,$deseqComparisonLabels,$deseqInputFiles,$tmpDir,$comparisonName,$deseqOutDir,$alpha,$pAdjustMethod);
+	createGSEArnkFile($comparisonName,$deseqOutDir);
 				
 }
 
@@ -165,11 +169,13 @@ sub createFullTable($$$$){
 	open(IN,"grep 'differ' ".$fileWithSortingCheckResults." |");
 	$res=<IN>;
 	close(IN);
-	chomp($res);
-	if($res=~ /differ/){
-		print "[deseq] sorting of samples differ among them. Check the htseqcount sorted files please.\n";
-		print "[execution finished]\n\n";
-		die "[deseq] sorting of samples differ among them. Check the htseqcount sorted files please.\n[execution finished]\n\n";		
+	if(defined($res)){
+		chomp($res);
+		if($res=~ /differ/){
+			print "[deseq] sorting of samples differ among them. Check the htseqcount sorted files please.\n";
+			print "[execution finished]\n\n";
+			die "[deseq] sorting of samples differ among them. Check the htseqcount sorted files please.\n[execution finished]\n\n";		
+		}
 	}else{		
 		print "[deseq] all samples were equally sorted: ok\n";
 	}
@@ -284,6 +290,8 @@ sub executeDESeqANDcomputeCorrelationAndPCA($$$$$$$$){
 	my $corrFile=$deseqOutDir.$comparisonName.".pearsonCorrelationAmongSamples.xls";
 	my $variance=$deseqOutDir.$comparisonName.".proportionOfVariance.pdf";
 	my $PCAfile=$deseqOutDir.$comparisonName.".samplesPCA.pdf";
+	my $cumVarFile=$deseqOutDir.$comparisonName.".cumulativeVariance.xls";
+	
 	open(RSCRIPT,">",$corrScriptFile);	
 	print RSCRIPT "normalizedCounts=read.table(\"".$normalizedCounts_file."\",header=T,sep = \"\\t\")\n";
 	print RSCRIPT "dim(normalizedCounts)\n";
@@ -297,6 +305,11 @@ sub executeDESeqANDcomputeCorrelationAndPCA($$$$$$$$){
 	print RSCRIPT "pdf(\"".$variance."\")\n";
 	print RSCRIPT "screeplot(PC)\n";
 	print RSCRIPT "dev.off()\n";
+	#Cumulative variance
+	print RSCRIPT "eig <- (PC\$sdev)^2\n";
+	print RSCRIPT "variance <- eig*100/sum(eig)\n";
+	print RSCRIPT "cumvar <- cumsum(variance)\n";
+	print RSCRIPT "write.table(cumvar,file=\"".$cumVarFile."\",sep=\"\\t\",col.names=NA)\n";	
 	#PCA graph
 	print RSCRIPT "pdf(\"".$PCAfile."\")\n";
 	print RSCRIPT "rot <- PC\$r\n";
@@ -471,6 +484,51 @@ sub createExcel($$$){
 	}
 
 }
+
+sub createGSEArnkFile($$){
+# A RNK file is created from log2 fold-change (instead of statistic)
+	
+	my($comparisonName,$deseqOutDir)=@_;
+	
+	my $diffExp_file=$deseqOutDir.$comparisonName.".differentialExpression.txt";
+	
+	my $unsortedRnkFile=$deseqOutDir.$comparisonName.".rnk.unsorted";
+	my $rnkFile=$deseqOutDir.$comparisonName.".rnk";
+
+	########## GENE LEVEL ##########	
+
+	if(open(DIFFEXP,$diffExp_file)){
+	open(UNSORTED,">",$unsortedRnkFile);
+	foreach my $line(<DIFFEXP>){
+		chomp($line);
+		
+		if($line !~ /log2FoldChange/){
+			my @tokens=split('\t',$line);
+			
+			#log2FoldChange
+			if($tokens[2] ne "NA"){
+				print UNSORTED $tokens[0]."\t".$tokens[2]."\n";			
+			}		
+		}
+	}	
+	close(DIFFEXP);
+	close(UNSORTED);
+	
+
+	#sorts the auxiliar file, saves the sorted file in the output file and deletes the auxiliar file
+	#LC_ALL=C -> forces the local configuration to use '.' to represent decimal numbers
+	#--stable avoids default (unrequested) sorting by gene name when log2foldchange=0
+	system("LC_ALL=C; export LC_ALL; sort -k2g --stable ".$unsortedRnkFile." -o ".$rnkFile."; rm -f ".$unsortedRnkFile);
+	print "\t[executing] LC_ALL=C; export LC_ALL; sort -k2g --stable ".$unsortedRnkFile." -o ".$rnkFile."; rm -f ".$unsortedRnkFile."\n";
+	
+	
+	}
+	else{
+		print STDERR "\n[ERROR createGSEArnkFiles_from_DESeq2]: ".$diffExp_file." file does not exist\n\n";
+		exit(-1);		
+	}
+}
+
 
 sub help(){
 	my $usage = qq{

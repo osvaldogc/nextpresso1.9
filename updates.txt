@@ -1,11 +1,14 @@
-****nextpresso1.9, oct2016
+****nextpresso1.9, dic2016
 
-I realised that seqtk consumes a lot of RAM memory if you ask for downsampling of reads. That's why I included another parameter in the configuration XML file:
+1. I realised that seqtk consumes a lot of RAM memory if you ask for downsampling of reads. That's why I included another parameter in the configuration XML file:
 'maximunNumberOfInstancesForDownSampling'
 It prevents a RAM overload here when the number of executing instances is reduced through this parameter, but allows to execute the rest of the programs with a higher number of instances (as it is pointed out with the parameter maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep).
 
 On the other hand, based on a publication I've just read, it's better to allow the user to control additional parameters of the cufflinks package, as the default options for these parameters
 would lead to worst results (Have a look at the paper 'Errors in RNA-Seq quantification affect genes of relevance to human disease').
+
+2. Creates a new file with cumulative variances when calculating correlation and PCA (for DESeq2, Cuffnorm and Cufflinks).
+3. Creates a new rnk file from DESeq2 differential expression files 
 
 
 

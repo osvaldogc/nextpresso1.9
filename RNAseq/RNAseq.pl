@@ -135,6 +135,7 @@ sub main(){
 	my $queueSystem=${$configHashRef}{queueSystem}[0];
 	my $queueName=${$configHashRef}{queueName}[0];	
 	my $multicore=${$configHashRef}{multicore}[0];
+	my $perl5lib=${$configHashRef}{PERL5LIB}[0];
 	my $gseaPath=${$configHashRef}{gsea}[0]{path}[0];
 	my $gseaChip=${$configHashRef}{gsea}[0]{chip}[0];
 	my $gseamaxMemory=${$configHashRef}{gsea}[0]{maxMemory}[0];
@@ -309,12 +310,12 @@ sub main(){
 	########## level 6: runs htseq-count (gets read counts for genes) + DESeq2 differential expression
 	if($level=~ /6/){
 		if($doSpikesAndGenomeRefIndexing eq "false"){		
-			ExecutionLevels::level_6($comparisons,$deseqParams,$extraPathsRequired,$htseqCountPath,$htseqCountPythonpath,$htseqcountParams,$samtoolsPath,$samples,$GTF,$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep,$workspace,$experimentName,$logfh,
+			ExecutionLevels::level_6($perl5lib,$comparisons,$deseqParams,$extraPathsRequired,$htseqCountPath,$htseqCountPythonpath,$htseqcountParams,$samtoolsPath,$samples,$GTF,$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep,$workspace,$experimentName,$logfh,
 			$executionCreatedTempDir,$queueSystem,$queueName,$multicore,$queueProject);
 		}else{ # when having spikes, it is more appropriate to not consider them for htseqcount as they could affect
 			# normalization values for regular genes. So in this case, the original GTF is given instead of the
 			#one with the combined annotation (genes+spikes) 
-			ExecutionLevels::level_6($comparisons,$deseqParams,$extraPathsRequired,$htseqCountPath,$htseqcountParams,$samtoolsPath,$samples,$initialGTF,$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep,$workspace,$experimentName,$logfh,
+			ExecutionLevels::level_6($perl5lib,$comparisons,$deseqParams,$extraPathsRequired,$htseqCountPath,$htseqcountParams,$samtoolsPath,$samples,$initialGTF,$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep,$workspace,$experimentName,$logfh,
 			$executionCreatedTempDir,$queueSystem,$queueName,$multicore,$queueProject);		
 		}
 	}

@@ -3,6 +3,7 @@
 # Author : Osvaldo Grana
 # Description: performs transcripts quantification and assembly
 # v0.3		oct2016
+# v0.4		dic2016 - adds cumulative variance for the samples
 
 use strict;
 use warnings;
@@ -229,6 +230,8 @@ sub calculateCorrelationsAndPCA_GeneLevel(){
 	my $corrFile=$outDir."pearsonCorrelationsAmongSamples_geneLevel.xls";
 	my $variance=$outDir."proportionOfVariance_geneLevel.pdf";
 	my $PCAfile=$outDir."samplesPCA_geneLevel.pdf";
+	my $cumVarFile=$outDir."cumulativeVariance_geneLevel.xls";
+	
 	open(RSCRIPT,">",$Rscriptfile);	
 	print RSCRIPT "FPKMs=read.table(\"".$XLSfile."\",header=T)\n";
 	print RSCRIPT "dim(FPKMs)\n";
@@ -242,6 +245,11 @@ sub calculateCorrelationsAndPCA_GeneLevel(){
 	print RSCRIPT "pdf(\"".$variance."\")\n";
 	print RSCRIPT "screeplot(FPKMpc)\n";
 	print RSCRIPT "dev.off()\n";
+	#Cumulative variance
+	print RSCRIPT "eig <- (FPKMpc\$sdev)^2\n";
+	print RSCRIPT "variance <- eig*100/sum(eig)\n";
+	print RSCRIPT "cumvar <- cumsum(variance)\n";
+	print RSCRIPT "write.table(cumvar,file=\"".$cumVarFile."\",sep=\"\\t\",col.names=NA)\n";
 	#PCA graph
 	print RSCRIPT "pdf(\"".$PCAfile."\")\n";
 	print RSCRIPT "rot <- FPKMpc\$r\n";
@@ -446,6 +454,8 @@ sub calculateCorrelationsAndPCA_IsoformLevel(){
 	my $corrFile=$outDir."pearsonCorrelationsAmongSamples_isoformLevel.xls";
 	my $variance=$outDir."proportionOfVariance_isoformLevel.pdf";
 	my $PCAfile=$outDir."samplesPCA_isoformLevel.pdf";
+	my $cumVarFile=$outDir."cumulativeVariance_isoformLevel.xls";
+	
 	open(RSCRIPT,">",$Rscriptfile);	
 	print RSCRIPT "FPKMs=read.table(\"".$XLSfile."\",header=T)\n";
 	print RSCRIPT "dim(FPKMs)\n";
@@ -459,6 +469,11 @@ sub calculateCorrelationsAndPCA_IsoformLevel(){
 	print RSCRIPT "pdf(\"".$variance."\")\n";
 	print RSCRIPT "screeplot(FPKMpc)\n";
 	print RSCRIPT "dev.off()\n";
+	#Cumulative variance
+	print RSCRIPT "eig <- (FPKMpc\$sdev)^2\n";
+	print RSCRIPT "variance <- eig*100/sum(eig)\n";
+	print RSCRIPT "cumvar <- cumsum(variance)\n";
+	print RSCRIPT "write.table(cumvar,file=\"".$cumVarFile."\",sep=\"\\t\",col.names=NA)\n";	
 	#PCA graph
 	print RSCRIPT "pdf(\"".$PCAfile."\")\n";
 	print RSCRIPT "rot <- FPKMpc\$r\n";
@@ -575,7 +590,7 @@ sub doSpikeInCorrection(){
 	
 	my $scriptName=$inputFPKMmatrix;
 	$scriptName=~ s/xls/Rscript\.for\.calculating\.SpikeInCorrection\.R/;
-print "\n\t[OSTIA******************************************************************]\n".$scriptName."\n\n";
+
 	open(OUT,">",$scriptName);
 	print OUT $Rscript;
 	close(OUT);

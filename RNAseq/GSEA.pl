@@ -3,6 +3,7 @@
 # Author: Osvaldo Grana
 # Description: runs GSEA on selected gene sets
 # v0.1		sep2014
+# v0.2		dic2016 adds a method to run GSEA on DESeq2 preranked files
 
 use strict;
 use FindBin qw($Bin); #finds out script path
@@ -37,7 +38,7 @@ sub main(){
 	$SIG{__WARN__} = \&confess;
 
 	my($collapse,$mode,$norm,$nperm,$scoring_scheme,$include_only_symbols,$make_sets,
-	$plot_top_x,$rnd_seed,$set_max,$set_min,$zip_report,$GSEAoutDir,$genesets,$nThreads,$comparison,$cuffdiffOutDir,$gseaPath,$gseaChip,$gseamaxMemory);
+	$plot_top_x,$rnd_seed,$set_max,$set_min,$zip_report,$GSEAoutDir,$genesets,$nThreads,$comparison,$diffExp_outDir,$gseaPath,$gseaChip,$gseamaxMemory);
 
 	undef($collapse);
 	undef($mode);
@@ -54,7 +55,7 @@ sub main(){
 	undef($GSEAoutDir);
 	undef($genesets);
 	undef($comparison);
-	undef($cuffdiffOutDir);
+	undef($diffExp_outDir);
 	undef($gseaPath);
 	undef($gseaChip);
 	undef($gseamaxMemory);
@@ -75,7 +76,7 @@ sub main(){
 		"set_min=s"=>\$set_min,
 		"zip_report=s"=>\$zip_report,
 		"GSEAoutDir=s"=>\$GSEAoutDir,
-		"cuffdiffOutDir=s"=>\$cuffdiffOutDir,
+		"diffExp_outDir=s"=>\$diffExp_outDir,
 		"genesets=s"=>\$genesets,
 		"comparison=s"=>\$comparison,
 		"gseaPath=s"=>\$gseaPath,
@@ -90,7 +91,7 @@ sub main(){
 #	} 
 
 	runGSEA($collapse,$mode,$norm,$nperm,$scoring_scheme,$include_only_symbols,$make_sets,
-	$plot_top_x,$rnd_seed,$set_max,$set_min,$zip_report,$GSEAoutDir,$genesets,$nThreads,$comparison,$cuffdiffOutDir,$gseaPath,$gseaChip,$gseamaxMemory);
+	$plot_top_x,$rnd_seed,$set_max,$set_min,$zip_report,$GSEAoutDir,$genesets,$nThreads,$comparison,$diffExp_outDir,$gseaPath,$gseaChip,$gseamaxMemory);
 	
 	
 		
@@ -99,11 +100,11 @@ sub main(){
 sub runGSEA($$$$$$$$$$$$$$$$$$$$){	
 
 	my($collapse,$mode,$norm,$nperm,$scoring_scheme,$include_only_symbols,$make_sets,
-	$plot_top_x,$rnd_seed,$set_max,$set_min,$zip_report,$GSEAoutDir,$genesets,$nThreads,$comparison,$cuffdiffOutDir,$gseaPath,$gseaChip,$gseamaxMemory)=@_;
+	$plot_top_x,$rnd_seed,$set_max,$set_min,$zip_report,$GSEAoutDir,$genesets,$nThreads,$comparison,$diffExp_outDir,$gseaPath,$gseaChip,$gseamaxMemory)=@_;
 
 	my @files=split(',',$genesets);
 	#preranked file
-	my $comparisonFile=$cuffdiffOutDir.$comparison.".rnk";
+	my $comparisonFile=$diffExp_outDir.$comparison.".rnk";
 	
 	#checks how many files there are to process	
 	my $counter=@files;

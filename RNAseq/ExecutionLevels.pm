@@ -94,8 +94,8 @@ sub level_0{
 		}
 		
 	}else{
-		print STDOUT "\n[CHECKSUM SKIPPED] This step was previously done\n";
-		print $logfh (Miscellaneous->getCurrentDateAndTime())."\n[CHECKSUM SKIPPED] This step was previously done\n";	
+		print STDOUT "\n[CHECKSUM SKIPPED] This step was already done\n";
+		print $logfh (Miscellaneous->getCurrentDateAndTime())."\n[CHECKSUM SKIPPED] This step was already done\n";	
 	}
 	
 	#wait step until checksum is done
@@ -1273,7 +1273,7 @@ sub level_5{
 
 ########## runs htseq-count (gets read counts for genes) + DESeq2 differential expression
 sub level_6{
-    	my($comparisons,$deseqParams,$extraPathsRequired,$htseqcountPath,$htseqCountPythonpath,$htseqcountParams,$samtoolsPath,$samples,$GTF,$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep,
+    	my($perl5lib,$comparisons,$deseqParams,$extraPathsRequired,$htseqcountPath,$htseqCountPythonpath,$htseqcountParams,$samtoolsPath,$samples,$GTF,$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep,
 	$workspace,$experimentName,$logfh,$executionCreatedTempDir,$queueSystem,$queueName,$multicore,$queueSGEProject)=@_;
 
 	my $multiCFlag = queue::multicoreFlag($queueSystem, $multicore); # for us '-pe' => qsub -pe multicore 4 -P Experiment -q ngs
@@ -1320,6 +1320,7 @@ sub level_6{
 		print STDOUT "\n[DOING] counting reads with Htseq-count\n";
 		my $command="perl ".$Bin."htseqCount.pl";
 		$command.=" --extraPathsRequired ".$extraPathsRequired;
+		$command.=" --perl5lib ".$perl5lib;
 		$command.=" --mode ".$mode;
 		$command.=" --minaqual ".$minaqual;
 		$command.=" --featuretype ".$featuretype;
@@ -1397,7 +1398,7 @@ sub level_6{
 			my $pAdjustMethod=$deseqParams->[0]->{pAdjustMethod};			
 			
 			#executes each comparison in each iteration
-			print STDOUT "\n[DOING] differential expression with DESeq2\n";
+			print STDOUT "[DOING] differential expression with DESeq2\n";
 			my $command="perl ".$Bin."deseq.pl";
 			$command.=" --nThreads ".$nThreads;
 			$command.=" --GTF ".$GTF;			
@@ -1512,83 +1513,173 @@ sub level_8{
 	# <----------------- only for testing ----------------------->
 #	use Data::Dumper;
 #	print STDERR "FILE:\n".Dumper($gseaParams)."\n";	
-    
-	my $cuffdiffOutDir=$workspace."cuffdiff/";
-	my $GSEAoutDir=$workspace."GSEA/";
-	File::Path::make_path($GSEAoutDir);
+
+
+    	#GSEA FOR CUFFDIFF RESULTS
+	my $cuffdiffOutDir=$workspace."cuffdiff/";	
 	
-	if(-d $cuffdiffOutDir && -d $GSEAoutDir){
+	if(-d $cuffdiffOutDir){
 
-		my $genesets=$gseaParams->[0]->{geneset};
-		my $genesetFiles="";
+		my $GSEAoutDir_Cuffdiff=$workspace."GSEA_Cuffdiff/";
+		File::Path::make_path($GSEAoutDir_Cuffdiff);
 		
-		#creates a string with al the gene set files
-		foreach my $gene(@$genesets){
-			#if /^HASH/ means that there is no value in the XML, ie. <geneset></geneset>
-			if(($gene ne "") && ($gene!~ /^HASH/)) {$genesetFiles.=$gene.","}
-		}
-		
-		#if gene sets are provided
-		if($genesetFiles ne ""){
-			$genesetFiles=~ s/,$//;
+		if(-d $GSEAoutDir_Cuffdiff){
+			my $genesets=$gseaParams->[0]->{geneset};
+			my $genesetFiles="";
 
-			my $collapse=$gseaParams->[0]->{collapse};
-			my $mode=$gseaParams->[0]->{mode};
-			my $norm=$gseaParams->[0]->{norm};
-			my $nperm=$gseaParams->[0]->{nperm};
-        		my $scoring_scheme=$gseaParams->[0]->{scoring_scheme};
-        		my $include_only_symbols=$gseaParams->[0]->{include_only_symbols};
-        		my $make_sets=$gseaParams->[0]->{make_sets};
-        		my $plot_top_x=$gseaParams->[0]->{plot_top_x};
-        		my $rnd_seed=$gseaParams->[0]->{rnd_seed};
-        		my $set_max=$gseaParams->[0]->{set_max};
-        		my $set_min=$gseaParams->[0]->{set_min};
-        		my $zip_report=$gseaParams->[0]->{zip_report};
-        		my $geneset=$gseaParams->[0]->{geneset}[0];
+			#creates a string with al the gene set files
+			foreach my $gene(@$genesets){
+				#if /^HASH/ means that there is no value in the XML, ie. <geneset></geneset>
+				if(($gene ne "") && ($gene!~ /^HASH/)) {$genesetFiles.=$gene.","}
+			}
 
-			print STDOUT "\n[DOING] Gene Set Enrichment Analysis (GSEA)\n";
-			#reads comparisons files
-			my $comparisonName="";
-			foreach my $comparison (keys %$comparisons){
-				$comparisonName=${\$comparison};			
-		
-				my $command="perl ".$Bin."GSEA.pl";
-				$command.=" --gseaPath ".$gseaPath;
-				$command.=" --gseaChip ".$gseaChip;
-				$command.=" --gseamaxMemory ".$gseamaxMemory;
-				$command.=" --collapse ".$collapse;
-				$command.=" --mode ".$mode;
-				$command.=" --norm ".$norm;
-				$command.=" --nperm ".$nperm;
-				$command.=" --scoring_scheme ".$scoring_scheme;
-				$command.=" --include_only_symbols ".$include_only_symbols;
-				$command.=" --make_sets ".$make_sets;
-				$command.=" --plot_top_x ".$plot_top_x;
-				$command.=" --rnd_seed ".$rnd_seed;
-				$command.=" --set_max ".$set_max;
-				$command.=" --set_min ".$set_min;
-        			$command.=" --zip_report ".$zip_report;
-        			$command.=" --genesets ".$genesetFiles;
-        			$command.=" --GSEAoutDir ".$GSEAoutDir;
-				$command.=" --cuffdiffOutDir ".$cuffdiffOutDir;
-				$command.=" --numberOfThreads ".$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep;
-				$command.=" --comparison ".$comparisonName;
-				$command.=" >> ".$workspace."GSEA.log 2>&1";
-				print $logfh (Miscellaneous->getCurrentDateAndTime()).$command."\n";
+			#if gene sets are provided
+			if($genesetFiles ne ""){
+				$genesetFiles=~ s/,$//;
 
-				queue::executeScript($queueSystem,$queueName,$queueSGEProject,"GSEA".substr($experimentName,0,5),
-				$workspace.$experimentName."_error",$workspace.$experimentName."_error",">".$executionCreatedTempDir."/NOTHING",$command,$wait,$multiCFlag);
-			}		
+				my $collapse=$gseaParams->[0]->{collapse};
+				my $mode=$gseaParams->[0]->{mode};
+				my $norm=$gseaParams->[0]->{norm};
+				my $nperm=$gseaParams->[0]->{nperm};
+        			my $scoring_scheme=$gseaParams->[0]->{scoring_scheme};
+        			my $include_only_symbols=$gseaParams->[0]->{include_only_symbols};
+        			my $make_sets=$gseaParams->[0]->{make_sets};
+        			my $plot_top_x=$gseaParams->[0]->{plot_top_x};
+        			my $rnd_seed=$gseaParams->[0]->{rnd_seed};
+        			my $set_max=$gseaParams->[0]->{set_max};
+        			my $set_min=$gseaParams->[0]->{set_min};
+        			my $zip_report=$gseaParams->[0]->{zip_report};
+        			my $geneset=$gseaParams->[0]->{geneset}[0];
+
+				print STDOUT "\n[DOING] Gene Set Enrichment Analysis (GSEA) on Cuffdiff results\n";
+				#reads comparisons files
+				my $comparisonName="";
+				foreach my $comparison (keys %$comparisons){
+					$comparisonName=${\$comparison};			
+
+					my $command="perl ".$Bin."GSEA.pl";
+					$command.=" --gseaPath ".$gseaPath;
+					$command.=" --gseaChip ".$gseaChip;
+					$command.=" --gseamaxMemory ".$gseamaxMemory;
+					$command.=" --collapse ".$collapse;
+					$command.=" --mode ".$mode;
+					$command.=" --norm ".$norm;
+					$command.=" --nperm ".$nperm;
+					$command.=" --scoring_scheme ".$scoring_scheme;
+					$command.=" --include_only_symbols ".$include_only_symbols;
+					$command.=" --make_sets ".$make_sets;
+					$command.=" --plot_top_x ".$plot_top_x;
+					$command.=" --rnd_seed ".$rnd_seed;
+					$command.=" --set_max ".$set_max;
+					$command.=" --set_min ".$set_min;
+        				$command.=" --zip_report ".$zip_report;
+        				$command.=" --genesets ".$genesetFiles;
+        				$command.=" --GSEAoutDir ".$GSEAoutDir_Cuffdiff;
+					$command.=" --diffExp_outDir ".$cuffdiffOutDir;
+					$command.=" --numberOfThreads ".$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep;
+					$command.=" --comparison ".$comparisonName;
+					$command.=" >> ".$workspace."GSEA.log 2>&1";
+					print $logfh (Miscellaneous->getCurrentDateAndTime()).$command."\n";
+
+					queue::executeScript($queueSystem,$queueName,$queueSGEProject,"GSEA".substr($experimentName,0,5),
+					$workspace.$experimentName."_error",$workspace.$experimentName."_error",">".$executionCreatedTempDir."/NOTHING",$command,$wait,$multiCFlag);
+				}		
+			}else{
+				print STDERR "\n[ERROR]: GSEA for Cuffdiff results cannot be executed because no gene sets has been provided\n";
+				print $logfh (Miscellaneous->getCurrentDateAndTime())."[ERROR]: GSEA for Cuffdiff results cannot be executed because no gene sets has been provided\n";
+			}
 		}else{
-			print STDERR "\n[ERROR]: GSEA cannot be executed because no gene sets has been provided\n";
-			print $logfh (Miscellaneous->getCurrentDateAndTime())."[ERROR]: GSEA cannot be executed because no gene sets has been provided\n";
+			print STDOUT "\n[GSEA]: $GSEAoutDir_Cuffdiff directory does not exist\n";
+			print $logfh (Miscellaneous->getCurrentDateAndTime())."[GSEA]: $GSEAoutDir_Cuffdiff directory does not exist\n";			
+		
 		}
         
 	}else{
-		print STDERR "\n[ERROR]: problem with directories:\n";
-		if(!-d $cuffdiffOutDir){print STDERR "\n[ERROR]: $cuffdiffOutDir directory does not exist\n";}
-		if(!-d $GSEAoutDir){print STDERR "\n[ERROR]: $GSEAoutDir directory does not exist\n";}
-		exit(-1);
+		print STDOUT "\n[GSEA]: $cuffdiffOutDir directory does not exist\n";
+		print $logfh (Miscellaneous->getCurrentDateAndTime())."[GSEA]: $cuffdiffOutDir directory does not exist\n";		
+	}
+	
+	
+	#GSEA FOR DESeq2 RESULTS	
+	my $deseqOutDir=$workspace."deseq/";
+	if(-d $deseqOutDir){
+
+		my $GSEAoutDir_deseq=$workspace."GSEA_DESeq/";
+		File::Path::make_path($GSEAoutDir_deseq);
+		
+		if(-d $GSEAoutDir_deseq){
+			my $genesets=$gseaParams->[0]->{geneset};
+			my $genesetFiles="";
+
+			#creates a string with al the gene set files
+			foreach my $gene(@$genesets){
+				#if /^HASH/ means that there is no value in the XML, ie. <geneset></geneset>
+				if(($gene ne "") && ($gene!~ /^HASH/)) {$genesetFiles.=$gene.","}
+			}
+
+			#if gene sets are provided
+			if($genesetFiles ne ""){
+				$genesetFiles=~ s/,$//;
+
+				my $collapse=$gseaParams->[0]->{collapse};
+				my $mode=$gseaParams->[0]->{mode};
+				my $norm=$gseaParams->[0]->{norm};
+				my $nperm=$gseaParams->[0]->{nperm};
+        			my $scoring_scheme=$gseaParams->[0]->{scoring_scheme};
+        			my $include_only_symbols=$gseaParams->[0]->{include_only_symbols};
+        			my $make_sets=$gseaParams->[0]->{make_sets};
+        			my $plot_top_x=$gseaParams->[0]->{plot_top_x};
+        			my $rnd_seed=$gseaParams->[0]->{rnd_seed};
+        			my $set_max=$gseaParams->[0]->{set_max};
+        			my $set_min=$gseaParams->[0]->{set_min};
+        			my $zip_report=$gseaParams->[0]->{zip_report};
+        			my $geneset=$gseaParams->[0]->{geneset}[0];
+
+				print STDOUT "\n[DOING] Gene Set Enrichment Analysis (GSEA) on DESeq2 results\n";
+				#reads comparisons files
+				my $comparisonName="";
+				foreach my $comparison (keys %$comparisons){
+					$comparisonName=${\$comparison};			
+
+					my $command="perl ".$Bin."GSEA.pl";
+					$command.=" --gseaPath ".$gseaPath;
+					$command.=" --gseaChip ".$gseaChip;
+					$command.=" --gseamaxMemory ".$gseamaxMemory;
+					$command.=" --collapse ".$collapse;
+					$command.=" --mode ".$mode;
+					$command.=" --norm ".$norm;
+					$command.=" --nperm ".$nperm;
+					$command.=" --scoring_scheme ".$scoring_scheme;
+					$command.=" --include_only_symbols ".$include_only_symbols;
+					$command.=" --make_sets ".$make_sets;
+					$command.=" --plot_top_x ".$plot_top_x;
+					$command.=" --rnd_seed ".$rnd_seed;
+					$command.=" --set_max ".$set_max;
+					$command.=" --set_min ".$set_min;
+        				$command.=" --zip_report ".$zip_report;
+        				$command.=" --genesets ".$genesetFiles;
+        				$command.=" --GSEAoutDir ".$GSEAoutDir_deseq;
+					$command.=" --diffExp_outDir ".$deseqOutDir;
+					$command.=" --numberOfThreads ".$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep;
+					$command.=" --comparison ".$comparisonName;
+					$command.=" >> ".$workspace."GSEA.log 2>&1";
+					print $logfh (Miscellaneous->getCurrentDateAndTime()).$command."\n";
+
+					queue::executeScript($queueSystem,$queueName,$queueSGEProject,"GSEA".substr($experimentName,0,5),
+					$workspace.$experimentName."_error",$workspace.$experimentName."_error",">".$executionCreatedTempDir."/NOTHING",$command,$wait,$multiCFlag);
+				}		
+			}else{
+				print STDERR "\n[ERROR]: GSEA for DESeq2 results cannot be executed because no gene sets has been provided\n";
+				print $logfh (Miscellaneous->getCurrentDateAndTime())."[ERROR]: GSEA for DESeq2 results cannot be executed because no gene sets has been provided\n";
+			}
+		}else{
+			print STDOUT "\n[GSEA]: $GSEAoutDir_deseq directory does not exist\n";
+			print $logfh (Miscellaneous->getCurrentDateAndTime())."[GSEA]: $GSEAoutDir_deseq directory does not exist\n";		
+		}
+        
+	}else{
+		print STDOUT "\n[GSEA]: $deseqOutDir directory does not exist\n";
+		print $logfh (Miscellaneous->getCurrentDateAndTime())."[GSEA]: $deseqOutDir directory does not exist\n";		
 	}
     
     

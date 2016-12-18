@@ -21,7 +21,7 @@ use threads;
 
 sub main();
 sub runSamtools($$$$);
-sub runHtseqCount($$$$$$$$$$$$$$);
+sub runHtseqCount($$$$$$$$$$$$$$$);
 sub checkThreads($$$);
 sub help();
 
@@ -39,7 +39,7 @@ sub main(){
 
 
 	my($mode,$minaqual,$featuretype,$idattr,$htseqcountPath,$htseqCountPythonpath,$samtoolsPath,$samples,
-	$GTF,$nThreads,$alignmentsDir,$htseqcountOutDir,$libraryType,$extraPathsRequired);
+	$GTF,$nThreads,$alignmentsDir,$htseqcountOutDir,$libraryType,$extraPathsRequired,$perl5lib);
 
 	undef($mode);
 	undef($minaqual);
@@ -56,6 +56,7 @@ sub main(){
 	undef($nThreads);
 	undef($libraryType);
 	undef($extraPathsRequired);
+	undef($perl5lib);
 
 	GetOptions(
 		"mode=s"=>\$mode,
@@ -72,6 +73,7 @@ sub main(){
 		"htseqcountOutDir=s"=>\$htseqcountOutDir,	#string
 		"libraryType=s"=>\$libraryType,
 		"extraPathsRequired=s"=>\$extraPathsRequired,
+		"perl5lib=s"=>\$perl5lib,
 	);
 
 #	if(!defined($mode) || !defined($tophatPath) || !defined($bowtiePath) || !defined($samtoolsPath) || !defined($referenceSequence) || !defined($indexPrefixForReferenceSequence) || !defined($samples) || !defined($outputFileNames) || !defined($GTF))
@@ -80,7 +82,7 @@ sub main(){
 #	} 
 
 	runSamtools($samtoolsPath,$samples,$alignmentsDir,$nThreads);				
-	runHtseqCount($extraPathsRequired,$mode,$minaqual,$featuretype,$idattr,$nThreads,$samtoolsPath,
+	runHtseqCount($perl5lib,$extraPathsRequired,$mode,$minaqual,$featuretype,$idattr,$nThreads,$samtoolsPath,
 		$htseqcountPath,$htseqCountPythonpath,$samples,$libraryType,$GTF,$alignmentsDir,$htseqcountOutDir);
 	
 	
@@ -162,8 +164,8 @@ sub runSamtools($$$$){
 	}		
 }
 
-sub runHtseqCount($$$$$$$$$$$$$$){
-	my($extraPathsRequired,$mode,$minaqual,$featuretype,$idattr,$nThreads,$samtoolsPath,
+sub runHtseqCount($$$$$$$$$$$$$$$){
+	my($perl5lib,$extraPathsRequired,$mode,$minaqual,$featuretype,$idattr,$nThreads,$samtoolsPath,
 	$htseqcountPath,$htseqCountPythonpath,$samples,$libraryType,$GTF,$alignmentsDir,$htseqcountOutDir)=@_;
 
 	my @files=split(',',$samples);
@@ -206,7 +208,7 @@ sub runHtseqCount($$$$$$$$$$$$$$){
 		}				
 				
 		$setOfThreads[$currentThread]=threads->create(\&htseqCount::runHtseqCount,
-		$extraPathsRequired,$mode,$minaqual,$featuretype,$idattr,$htseqcountPath,$htseqCountPythonpath,$GTF,
+		$perl5lib,$extraPathsRequired,$mode,$minaqual,$featuretype,$idattr,$htseqcountPath,$htseqCountPythonpath,$GTF,
 		$library,$samFile,$htseqcountPathOutputFile);
 
 		$currentThread++;
