@@ -9,6 +9,7 @@ would lead to worst results (Have a look at the paper 'Errors in RNA-Seq quantif
 
 2. Creates a new file with cumulative variances when calculating correlation and PCA (for DESeq2, Cuffnorm and Cufflinks).
 3. Creates a new rnk file from DESeq2 differential expression files 
+4. Creates a new file with normalised counts for ALL samples together from DESeq2
 
 
 
