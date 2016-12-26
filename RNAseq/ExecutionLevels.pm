@@ -1345,6 +1345,10 @@ sub level_6{
 			$wait = queue::waitPidsQUEUE($executionCreatedTempDir."/tophatIsWaiting",$queueSystem);	
 		}
 		
+		
+		my $listWithAllSamples="";
+		my $allComparisonLables="all_1,all_2";
+		
 		foreach my $comparison (keys %$comparisons){
 			my $deseqComparisonLabels="";
 			my $deseqInputFiles="";				
@@ -1354,6 +1358,7 @@ sub level_6{
 			my $conditions=$comparisons->{$comparison}->{condition};		
 
 			my $rememberOneLibraryName="";
+			
 			my $i=1;
 			
 			#finds out the number of conditions
@@ -1370,11 +1375,13 @@ sub level_6{
 
 					if($cuffdiffPosition==$i){ #includes this condition in the proper order
 						$deseqComparisonLabels.=${\$condition}.","; #condition name
-						my $libraries=$conditions->{$condition}->{libraryName};
+						my $libraries=$conditions->{$condition}->{libraryName};						
 
 						foreach my $library(@$libraries){
 							$deseqInputFiles.=$htseqcountOutDir.$library.".xls,"; #library (replicate)
 							$rememberOneLibraryName=$library;
+							
+							$listWithAllSamples.=$htseqcountOutDir.$library.".xls,"; #library (replicate)
 
 							#print "\t".$library."\n";
 						}
@@ -1383,6 +1390,11 @@ sub level_6{
 						#to separate files from different samples
 						$deseqInputFiles=~ s/\,$//;
 						$deseqInputFiles.=":";
+						
+						#for adding ':' only once, to force two (artificial) groups,
+						#no matter what groups they are
+						$listWithAllSamples=~ s/\,$//;
+						if($listWithAllSamples!~ /\:/){$listWithAllSamples.=":";}
 
 						$i++;
 					}
@@ -1414,14 +1426,43 @@ sub level_6{
 			
 			print $logfh (Miscellaneous->getCurrentDateAndTime()).$command."\n";
 
-			queue::executeScript($queueSystem,$queueName,$queueSGEProject,"cnor".substr($experimentName,0,5),
+			queue::executeScript($queueSystem,$queueName,$queueSGEProject,"deseq2".substr($experimentName,0,5),
 			$workspace.$experimentName."_error",$workspace.$experimentName."_error",">".$executionCreatedTempDir."/NOTHING",$command,$wait,$multiCFlag);
 
 			
 		}#foreach my $comparison (keys %$comparisons)
+		
+		
+		#executes DESeq2 once more with all the samples together
+		my $nThreads=$deseqParams->[0]->{nThreads};
+		my $alpha=$deseqParams->[0]->{alpha};
+		my $pAdjustMethod=$deseqParams->[0]->{pAdjustMethod};		
+		$command="perl ".$Bin."deseq.pl";
+		$command.=" --nThreads ".$nThreads;
+		$command.=" --GTF ".$GTF;			
+		$command.=" --alpha ".$alpha;
+		$command.=" --pAdjustMethod ".$pAdjustMethod;
+		$command.=" --deseqOutDir ".$deseqOutDir;
+		$command.=" --comparisonName ALLsamples";
+		$command.=" --deseqInputFiles ".$listWithAllSamples;
+		$command.=" --deseqComparisonLabels ".$allComparisonLables;
+		$command.=" --extraPathsRequired ".$extraPathsRequired;
+		$command.=" --tmpDir ".$executionCreatedTempDir;
+		$command.=" >> ".$workspace."deseq.log 2>&1";	
+			
+		print $logfh (Miscellaneous->getCurrentDateAndTime()).$command."\n";
+
+		queue::executeScript($queueSystem,$queueName,$queueSGEProject,"deseq2".substr($experimentName,0,5),
+		$workspace.$experimentName."_error",$workspace.$experimentName."_error",">".$executionCreatedTempDir."/NOTHING",$command,$wait,$multiCFlag);
+
+		#deletes differential expression files for ALL samples as it makes no sense (as more than two conditions could be included)
+		#deletes the associated rnk file
+		$command="rm -f ".$deseqOutDir."ALLsamples.differentialExpression* ".$deseqOutDir."ALLsamples.rnk";
+		system($command);
+		print $logfh (Miscellaneous->getCurrentDateAndTime()).$command."\n";
 	
 	}else{
-		print STDERR "\n[ERROR]: problem with directories:\n";
+		print STDERR "\n[ERROR]: problem with the following directories:\n";
 		if(!-d $alignmentsDir){print STDERR "\n[ERROR]: $alignmentsDir directory does not exist\n";}
 		if(!-d $htseqcountOutDir){print STDERR "\n[ERROR]: $htseqcountOutDir directory does not exist\n";}
 		if(!-d $deseqOutDir){print STDERR "\n[ERROR]: $deseqOutDir directory does not exist\n";}
@@ -1589,14 +1630,14 @@ sub level_8{
 				print $logfh (Miscellaneous->getCurrentDateAndTime())."[ERROR]: GSEA for Cuffdiff results cannot be executed because no gene sets has been provided\n";
 			}
 		}else{
-			print STDOUT "\n[GSEA]: $GSEAoutDir_Cuffdiff directory does not exist\n";
-			print $logfh (Miscellaneous->getCurrentDateAndTime())."[GSEA]: $GSEAoutDir_Cuffdiff directory does not exist\n";			
+			print STDOUT "\n[ERROR]: $GSEAoutDir_Cuffdiff directory does not exist, skipping GSEA for Cuffdiff results\n";
+			print $logfh (Miscellaneous->getCurrentDateAndTime())."[ERROR]: $GSEAoutDir_Cuffdiff directory does not exist, skipping GSEA for Cuffdiff results\n";			
 		
 		}
         
 	}else{
-		print STDOUT "\n[GSEA]: $cuffdiffOutDir directory does not exist\n";
-		print $logfh (Miscellaneous->getCurrentDateAndTime())."[GSEA]: $cuffdiffOutDir directory does not exist\n";		
+		print STDOUT "\n[WARNING]: Skipping GSEA for Cuffdiff results as $cuffdiffOutDir directory does not exist. Probably you haven't run differential expression with Cuffdiff\n";
+		print $logfh (Miscellaneous->getCurrentDateAndTime())."[WARNING]: Skipping GSEA for Cuffdiff results as $cuffdiffOutDir directory does not exist. Probably you haven't run differential expression with Cuffdiff\n";		
 	}
 	
 	
@@ -1673,14 +1714,16 @@ sub level_8{
 				print $logfh (Miscellaneous->getCurrentDateAndTime())."[ERROR]: GSEA for DESeq2 results cannot be executed because no gene sets has been provided\n";
 			}
 		}else{
-			print STDOUT "\n[GSEA]: $GSEAoutDir_deseq directory does not exist\n";
-			print $logfh (Miscellaneous->getCurrentDateAndTime())."[GSEA]: $GSEAoutDir_deseq directory does not exist\n";		
+			print STDOUT "\n[ERROR]: $GSEAoutDir_deseq directory does not exist, skipping GSEA for DESeq2 results\n";
+			print $logfh (Miscellaneous->getCurrentDateAndTime())."[ERROR]: $GSEAoutDir_deseq directory does not exist, skipping GSEA for DESeq2 results\n";			
+		
 		}
         
 	}else{
-		print STDOUT "\n[GSEA]: $deseqOutDir directory does not exist\n";
-		print $logfh (Miscellaneous->getCurrentDateAndTime())."[GSEA]: $deseqOutDir directory does not exist\n";		
+		print STDOUT "\n[WARNING]: Skipping GSEA for DESeq2 results as $deseqOutDir directory does not exist. Probably you haven't run differential expression with DESeq2\n";
+		print $logfh (Miscellaneous->getCurrentDateAndTime())."[WARNING]: Skipping GSEA for DESeq2 results as $deseqOutDir directory does not exist. Probably you haven't run differential expression with DESeq2\n";		
 	}
+	
     
     
 }

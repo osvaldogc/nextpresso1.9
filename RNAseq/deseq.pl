@@ -4,7 +4,8 @@
 # Description: runs DESeq
 # v0.1		apr2015
 # v0.2		dic2016 - adds cumulative variance for the samples
-#			- creates rnk file for GSEA
+#			- creates rnk files for GSEA for all comparisons
+#			- creates a normalized count table with all the samples 
 
 use strict;
 use FindBin qw($Bin); #finds out script path
@@ -309,7 +310,10 @@ sub executeDESeqANDcomputeCorrelationAndPCA($$$$$$$$){
 	print RSCRIPT "eig <- (PC\$sdev)^2\n";
 	print RSCRIPT "variance <- eig*100/sum(eig)\n";
 	print RSCRIPT "cumvar <- cumsum(variance)\n";
-	print RSCRIPT "write.table(cumvar,file=\"".$cumVarFile."\",sep=\"\\t\",col.names=NA)\n";	
+	print RSCRIPT "cumvar_matrix <- matrix (cumvar,nrow=length(cumvar),ncol=2,byrow=FALSE)\n";
+	print RSCRIPT "colnames(cumvar_matrix) <- c(\"PC\",\"% cumulative variance\")\n";
+	print RSCRIPT "for(i in 1:length(cumvar)){ cumvar_matrix[i][1]=i }\n";	
+	print RSCRIPT "write.table(cumvar_matrix,file=\"".$cumVarFile."\",sep=\"\\t\",col.names=TRUE,row.names=FALSE)\n";	
 	#PCA graph
 	print RSCRIPT "pdf(\"".$PCAfile."\")\n";
 	print RSCRIPT "rot <- PC\$r\n";
@@ -478,6 +482,9 @@ sub createExcel($$$){
 		$worksheet->set_column('E:G' ,17);
 
 		$workbook->close();
+		
+		
+		system("rm -rf ".$inputFileSORTED);
 	}else{
 		print STDERR "\n[ERROR createExcel]: $inputFile file does not exist\n\n";
 		exit(-1);
@@ -507,7 +514,7 @@ sub createGSEArnkFile($$){
 			
 			#log2FoldChange
 			if($tokens[2] ne "NA"){
-				print UNSORTED $tokens[0]."\t".$tokens[2]."\n";			
+				print UNSORTED uc($tokens[0])."\t".$tokens[2]."\n";			
 			}		
 		}
 	}	
