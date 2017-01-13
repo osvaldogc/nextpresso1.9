@@ -3,6 +3,7 @@
 # Author: Osvaldo Grana
 # Description: performs transcripts quantification and assembly
 # v0.3		oct2016
+# v0.4		dic2016 - adds colors to sample names in PCA plots
 
 use strict;
 use FindBin qw($Bin); #finds out script path
@@ -23,7 +24,7 @@ sub main();
 sub runCuffquant($$$$$$$$$$$$$$$$$);
 sub runCuffdiff($$$$$$$$$$$$$$$$$$$$$$);
 sub runCuffnorm($$$$$$$$$$$$$$);
-sub calculateCorrelationsAndPCA($$);
+sub calculateCorrelationsAndPCA($$$$);
 sub checkThreads($$$);
 sub help();
 
@@ -43,7 +44,7 @@ sub main(){
 	my($cuffnormNormalization,$cuffdiffLibraryNormalizationMethod,$cuffnormLibraryType,$cuffnormLabels,$cuffnormInputFiles);
 	my($GTF,$samples,$cuffquantOutDir,$cuffdiffOutDir,$cuffnormOutDir,$cuffdiffLibraryType,$cuffdiffComparisonLabels,$cuffdiffInputFiles);
 	my($cuffquant_noEffectiveLengthCorrection,$cuffquant_noLengthCorrection);
-	my($cuffdiff_noEffectiveLengthCorrection,$cuffdiff_noLengthCorrection,$cuffdiff_dispersionMethod);
+	my($cuffdiff_noEffectiveLengthCorrection,$cuffdiff_noLengthCorrection,$cuffdiff_dispersionMethod,$cuffnormColors);
 	
 	my $mode="123";
 	my $nThreads=1;
@@ -79,6 +80,7 @@ sub main(){
 	undef($cuffdiff_noEffectiveLengthCorrection);
 	undef($cuffdiff_noLengthCorrection);
 	undef($cuffdiff_dispersionMethod);
+	undef($cuffnormColors);
 	
 	GetOptions(
 		"mode=i"=>\$mode, #integer
@@ -123,8 +125,8 @@ sub main(){
 		"cuffquant_noLengthCorrection=s"=>\$cuffquant_noLengthCorrection,		
 		"cuffdiff_noEffectiveLengthCorrection=s"=>\$cuffdiff_noEffectiveLengthCorrection,
 		"cuffdiff_noLengthCorrection=s"=>\$cuffdiff_noLengthCorrection,
-		"cuffdiff_dispersionMethod=s"=>\$cuffdiff_dispersionMethod
-		
+		"cuffdiff_dispersionMethod=s"=>\$cuffdiff_dispersionMethod,
+		"colors=s"=>\$cuffnormColors
 	);
 
 #	if(!defined($mode) || !defined($tophatPath) || !defined($bowtiePath) || !defined($samtoolsPath) || !defined($referenceSequence) || !defined($indexPrefixForReferenceSequence) || !defined($samples) || !defined($outputFileNames) || !defined($GTF))
@@ -147,13 +149,16 @@ sub main(){
 		$cuffdiff_noEffectiveLengthCorrection,$cuffdiff_noLengthCorrection,$cuffdiff_dispersionMethod);		
 	}
 	if($mode=~ "3"){
-		# replaces the initial separation between the samples from different conditions (represented by ':'), by a space (required in this way by cuffnorm)
+		# replaces the initial separation between the samples from the different conditions (represented by ':'), by a space (required in this way by cuffnorm)
 		$cuffnormInputFiles=~ s/\:/ /g;
-		
+		$cuffnormColors=~ s/,$//;
+		$cuffnormColors=~ s/,/","/g;
+		$cuffnormColors="\"".$cuffnormColors."\"";
+
 		runCuffnorm($extraPathsRequired,$cuffnormNThreads,$cufflinksPath,$samtoolsPath,$cuffquantOutDir,$GTF,$cuffnormOutputFormat,
 		$cuffnormLibraryNormalizationMethod,$cuffnormSeed,$cuffnormNormalization,$cuffnormLibraryType,$cuffnormOutDir,$cuffnormLabels,$cuffnormInputFiles);
-		
-		calculateCorrelationsAndPCA($extraPathsRequired,$cuffnormOutDir);
+
+		calculateCorrelationsAndPCA($extraPathsRequired,$cuffnormOutDir,$cuffnormInputFiles,$cuffnormColors);
 	}	
 		
 }
@@ -262,10 +267,10 @@ sub runCuffnorm($$$$$$$$$$$$$$){
 		$cuffnormLibraryNormalizationMethod,$cuffnormSeed,$cuffnormNormalization,$cuffnormLibraryType,$cuffnormOutDir,$cuffnormLabels,$cuffnormInputFiles);	
 }
 
-sub calculateCorrelationsAndPCA($$){
-	my ($extraPathsRequired,$cuffnormOutDir)=@_;
+sub calculateCorrelationsAndPCA($$$$){
+	my ($extraPathsRequired,$cuffnormOutDir,$cuffnormInputFiles,$cuffnormColors)=@_;
 	
-	&cuffquant_cuffdiff_cuffnorm::calculateCorrelationsAndPCA_GeneLevel($extraPathsRequired,$cuffnormOutDir);
+	&cuffquant_cuffdiff_cuffnorm::calculateCorrelationsAndPCA_GeneLevel($extraPathsRequired,$cuffnormOutDir,$cuffnormInputFiles,$cuffnormColors);
 }
 
 sub checkThreads($$$){

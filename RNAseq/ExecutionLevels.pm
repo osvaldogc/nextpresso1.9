@@ -4,7 +4,7 @@
 # Author: Osvaldo Grana
 # Description : executes the different levels
 
-# v1.9	nov2016
+# v1.9	ene2017 - adds PCAs with all samples together, for both Cuffnorm and DESeq2
 
 package ExecutionLevels;
 use strict;
@@ -1007,14 +1007,24 @@ sub level_5{
 		#<---- cuffdiff && cuffnorm ---->
 		#<---- READS COMPARISONS and inserts them in the proper order for cuffdiff ---->
 		
-		# it loops for 100 posible positions max, much more than required, just in case...
+		# it loops for 100 posible positions max, more than required, just in case...
 
 		
 		#the loop is a way to set the order of the conditions for cuffdiff, according to what is
 		#pointed out in the xml file
 		
 		$GTF=$originalGTF;
-		my($cuffnormInputFiles);		
+		my($cuffnormInputFiles);
+		my @colors=("lightgreen","lightpink","lightblue","lightyellow","ligthred",
+		"brightgreen","brightpink","brightblue","brightyellow","ligthred",
+		"black","red",",green","yellow","blue","magenta","cyan");
+		
+		#these variables below are required to assign similar colors to all the samples of the same group/condition,
+		#when performing the last cuffnorm comparison (with all the samples at once)
+		my %sample_class=();
+		my $sample_class_counter=0;
+		my $samples_already_included="";
+					
 		foreach my $comparison (keys %$comparisons){
 			my $cuffdiffComparisonLabels="";
 			my $cuffdiffInputFiles="";
@@ -1029,12 +1039,14 @@ sub level_5{
 			
 			#finds out the number of conditions
 			my @howManyConditions=keys %$conditions; 
+			
+			my $cuffnormColors="";
+			
 			#while it hasn't checked all the conditions
 			while($i<=@howManyConditions){
 				foreach my $condition(sort keys %$conditions){
 					#condition name					
 					#print "cond: ".${\$condition}."\n";
-
 
 					my $cuffdiffPosition=$conditions->{$condition}->{cuffdiffPosition};					
 					#print $cuffdiffPosition."\n";
@@ -1042,7 +1054,9 @@ sub level_5{
 					if($cuffdiffPosition==$i){ #includes this condition in the proper order
 						$cuffdiffComparisonLabels.=${\$condition}.","; #condition name
 						my $libraries=$conditions->{$condition}->{libraryName};
-
+						
+						my $are_new_samples_added=0;
+						
 						foreach my $library(@$libraries){
 							if($doSpikesAndGenomeRefIndexing eq "false"){ #uses regular cuffquant files
 								$cuffdiffInputFiles.=$cuffquantOutDir.$library."/abundances.cxb,"; #library (replicate)
@@ -1051,12 +1065,16 @@ sub level_5{
 							}
 							
 							$cuffnormInputFiles.=$cuffquantOutDir.$library."/abundances.cxb,"; #library (replicate)
-							
+							$cuffnormColors.=$colors[$i-1].",";
 							$cuffnormLabels.=$library.",";
 							$rememberOneLibraryName=$library;
-
-							#print "\t".$library."\n";
+						
 						}
+						
+						if($are_new_samples_added){
+							$sample_class_counter++;						
+						}
+						
 
 						#moves to the next sample: deletes last "," and inserts an extra ':' character
 						#to separate files from different samples
@@ -1064,10 +1082,13 @@ sub level_5{
 						$cuffdiffInputFiles.=":";
 						$cuffnormInputFiles=~ s/\,$//;
 						$cuffnormInputFiles.=":";
-
+						
+						
 						$i++;
 					}
 				}
+				
+				
 			}
 
 			$cuffdiffComparisonLabels=~ s/\,$//;
@@ -1163,6 +1184,7 @@ sub level_5{
 			$command.=" --cuffnormlibraryNormalizationMethod ".$cuffnormlibraryNormalizationMethod;
 			$command.=" --cuffnormSeed ".$cuffnormSeed;
 			$command.=" --cuffnormNormalization ".$cuffnormNormalization;
+			$command.=" --colors ".$cuffnormColors;
 
 			#if a GTF file is provided or if the user would like to use the GTF file created by cuffmerge
 			if(($GTF ne "") || ($cuffnormUseCuffmergeAssembly eq "true")){
@@ -1203,19 +1225,41 @@ sub level_5{
 		}#foreach my $comparison (keys %$comparisons)
 		
 		
-		#EXECUTES the last CUFFNORM for ALL SAMPLES together
-		$GTF=$originalGTF;
+		#EXECUTES the last CUFFNORM for ALL SAMPLES together		
+		$GTF=$originalGTF;		
 		
-		#regarding the library type, it asumes that all the libraries in this comparison are of the same library type.
-		#so it only checks the type in one of them, it should be enough (different types cannot be mixed with cuffdiff)
-		my @libs=split(',',$ALLsamples);		
+		my @unsorted_Samples=split(',',$ALLsamples);
+		
+		#samples are sorted here (they are recevied in some kind of random order)
+		my @sorted_samples = sort { lc($a) cmp lc($b) } @unsorted_Samples;
+		
+		my $ALL_LABELS="";
+		foreach my $label(@sorted_samples){
+			$ALL_LABELS.=$label.",";
+		}
+		$ALL_LABELS=~ s/\,$//;
+		
 		$cuffnormInputFiles="";
-		foreach my $lib(@libs){
+		my $colorsForAllSamples="";
+		#my $counter=0;
+		foreach my $lib(@sorted_samples){
 			$cuffnormInputFiles.=$cuffquantOutDir.$lib."/abundances.cxb:";
+			
+			#COLOR patterns for all sample PCAs
+			
+			#OPTION 1: assigns a color from @colors corresponding to sample number
+			#$colorsForAllSamples.=$colors[$counter].",";
+			#$counter++;
+			
+			#OPTION 2: assigns a RANDOM color for each sample from @colors: 17 colors in total
+			#$colorsForAllSamples.=$colors[int(rand(17))].",";
+			
+			#OPTION 3: all samples in black color
+			$colorsForAllSamples.="black,"; # assigns black color to all samples
 		}
 		
 		$cuffnormInputFiles=~ s/\,$//;
-		$cuffnormInputFiles=~ s/\:$//;		
+		$cuffnormInputFiles=~ s/\:$//;
 		
 		#cuffnorm has to assume that all the samples are of the same type, because they are all normalized together
 		my $onelibType=(split(',',$libraryType))[0];
@@ -1226,6 +1270,7 @@ sub level_5{
 		$command.=" --cuffnormlibraryNormalizationMethod ".$cuffnormlibraryNormalizationMethod;
 		$command.=" --cuffnormSeed ".$cuffnormSeed;
 		$command.=" --cuffnormNormalization ".$cuffnormNormalization;
+		$command.=" --colors ".$colorsForAllSamples;
 
 		#if a GTF file is provided or if the user would like to use the GTF file created by cuffmerge
 		if(($GTF ne "") || ($cuffnormUseCuffmergeAssembly eq "true")){
@@ -1251,7 +1296,7 @@ sub level_5{
 		
 		$command.=" --cuffnormLibraryType ".$onelibType;
 		$command.=" --cuffnormOutDir ".$cuffnormOutDir."ALLsamples/";
-		$command.=" --cuffnormLabels ".$ALLsamples;
+		$command.=" --cuffnormLabels ".$ALL_LABELS;
 		$command.=" --cuffnormInputFiles ".$cuffnormInputFiles; 
 		$command.=" --extraPathsRequired ".$extraPathsRequired;
 		$command.=" --tmpDir ".$executionCreatedTempDir;
@@ -1348,6 +1393,7 @@ sub level_6{
 		
 		my $listWithAllSamples="";
 		my $allComparisonLables="all_1,all_2";
+		my $samplesIncludedIn_listWithAllSamples="";
 		
 		foreach my $comparison (keys %$comparisons){
 			my $deseqComparisonLabels="";
@@ -1381,9 +1427,10 @@ sub level_6{
 							$deseqInputFiles.=$htseqcountOutDir.$library.".xls,"; #library (replicate)
 							$rememberOneLibraryName=$library;
 							
-							$listWithAllSamples.=$htseqcountOutDir.$library.".xls,"; #library (replicate)
-
-							#print "\t".$library."\n";
+							if($samplesIncludedIn_listWithAllSamples!~ /=$library=/){
+								$listWithAllSamples.=$htseqcountOutDir.$library.".xls,"; #library (replicate)
+								$samplesIncludedIn_listWithAllSamples.="=".$library."=";								
+							}
 						}
 
 						#moves to the next sample: deletes last "," and inserts an extra ':' character
@@ -1392,9 +1439,11 @@ sub level_6{
 						$deseqInputFiles.=":";
 						
 						#for adding ':' only once, to force two (artificial) groups,
-						#no matter what groups they are
-						$listWithAllSamples=~ s/\,$//;
-						if($listWithAllSamples!~ /\:/){$listWithAllSamples.=":";}
+						#no matter what groups they are						
+						if($listWithAllSamples!~ /\:/){
+							$listWithAllSamples=~ s/\,$//;
+							$listWithAllSamples.=":";
+						}
 
 						$i++;
 					}
@@ -1403,7 +1452,8 @@ sub level_6{
 
 			$deseqComparisonLabels=~ s/\,$//;
 			$deseqInputFiles=~ s/\,$//;
-			$deseqInputFiles=~ s/\:$//;			
+			$deseqInputFiles=~ s/\:$//;
+						
 			
 			my $nThreads=$deseqParams->[0]->{nThreads};
 			my $alpha=$deseqParams->[0]->{alpha};
@@ -1432,6 +1482,7 @@ sub level_6{
 			
 		}#foreach my $comparison (keys %$comparisons)
 		
+		$listWithAllSamples=~ s/\,$//;
 		
 		#executes DESeq2 once more with all the samples together
 		my $nThreads=$deseqParams->[0]->{nThreads};

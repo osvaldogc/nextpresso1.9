@@ -3,7 +3,7 @@
 # Author: Osvaldo Grana
 # Description: runs DESeq
 # v0.1		apr2015
-# v0.2		dic2016 - adds cumulative variance for the samples
+# v0.2		dic2016 - adds cumulative variance for the samples PCAs
 #			- creates rnk files for GSEA for all comparisons
 #			- creates a normalized count table with all the samples 
 
@@ -300,7 +300,6 @@ sub executeDESeqANDcomputeCorrelationAndPCA($$$$$$$$){
 	#pearsonCorrelation
 	print RSCRIPT "samplesCorr <- cor(normMatrix,method=\"pearson\")\n";
 	print RSCRIPT "write.table(samplesCorr,file=\"".$corrFile."\",sep=\"\\t\",col.names=NA,eol = \"\\n\",dec = ".")\n";
-	#PCA
 	print RSCRIPT "PC <- prcomp(normMatrix,scale.=T)\n";
 	#proportion of variance
 	print RSCRIPT "pdf(\"".$variance."\")\n";
@@ -319,14 +318,17 @@ sub executeDESeqANDcomputeCorrelationAndPCA($$$$$$$$){
 	print RSCRIPT "rot <- PC\$r\n";
 	
 	#defines colors
-	my @colors=("lightgreen","lightpink","lightblue","orange","blue","green");
+	my @colors=("lightgreen","lightpink","lightblue","lightyellow","ligthred",
+		"brightgreen","brightpink","brightblue","brightyellow","ligthred",
+		"black","red",",green","yellow","blue","magenta","cyan");
 	
 	my $colorArray="col=c(";
 	my $counter=0;
 	my $checked=0;
 	for(my $h=0;$h<$nSamples;$h++){
 		if(!$checked && $h>$nControlSamples-1){$counter++; $checked=1}
-		$colorArray.="\"".$colors[$counter]."\",";				
+		if($comparisonName ne "ALLsamples"){$colorArray.="\"".$colors[$counter]."\","}
+		else{$colorArray.="\"black\","}
 	}
 	$colorArray=~ s/\,$//;
 	$colorArray.=")";

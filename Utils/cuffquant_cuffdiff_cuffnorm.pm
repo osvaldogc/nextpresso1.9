@@ -3,7 +3,8 @@
 # Author : Osvaldo Grana
 # Description: runs cuffquant, cuffdiff, cuffnorm and prepares preranked 'rnk' files for GSEA
 # v0.3		oct2016
-# v0.4		dic2016 - adds cumulative variance for the samples
+# v0.4		dic2016 - adds cumulative variance for the samples PCAs
+#			- adds colors to sample names in PCA plots
 
 use strict;
 use warnings;
@@ -645,7 +646,7 @@ sub createGSEArnkFile(){
 }
 
 sub calculateCorrelationsAndPCA_GeneLevel(){
-	my($extraPathsRequired,$cuffnormOutDir)=@_;
+	my($extraPathsRequired,$cuffnormOutDir,$cuffnormInputFiles,$cuffnormColors)=@_;
 
 	#checks out the names of the comparisons that there are in the cuffnorm directory
 	open(IN,"ls -d ".$cuffnormOutDir." | ");
@@ -802,17 +803,8 @@ sub calculateCorrelationsAndPCA_GeneLevel(){
 		#my @colors=("lightblue","lightgreen","lightpink","orange","blue","green");
 		#****NOTE: as the order of the samples is not known, using colors could be confusing because
 		# unrelated samples could have the same color by chance. So, better to use black for all.
-		my @colors=("black","black","black","black","black","black");
 
-		my $colorArray="col=c(";
-		my $counter=0;
-		for(my $h=0;$h<@files;$h++){
-			$colorArray.="\"".$colors[$counter]."\",";
-			$counter++;
-			if($counter>=(@colors-1)){$counter=0}		
-		}
-		$colorArray=~ s/\,$//;
-		$colorArray.=")";
+		my $colorArray="col=c(".$cuffnormColors.")";
 
 		print RSCRIPT "plot(rot[,1],rot[,2],ylab=\"PC2\",xlab=\"PC1\",main=c(\"PCA\"),pch=16,";
 		print RSCRIPT $colorArray.")\n"; #",xlim=c(-1,1), ylim=c(-1,1))\n";
