@@ -1,4 +1,4 @@
-****nextpresso1.9, dic2016
+****nextpresso1.9, ene2017
 
 1. I realised that seqtk consumes a lot of RAM memory if you ask for downsampling of reads. That's why I included another parameter in the configuration XML file:
 'maximunNumberOfInstancesForDownSampling'
@@ -10,7 +10,7 @@ would lead to worst results (Have a look at the paper 'Errors in RNA-Seq quantif
 2. Creates a new file with cumulative variances when calculating correlation and PCA (for DESeq2, Cuffnorm and Cufflinks).
 3. Creates a new rnk file from DESeq2 differential expression files 
 4. Creates a new file with normalised counts for ALL samples together from DESeq2
-
+5. Runs GSEA also on DESeq2 rnk files. This leads to two new folders: 'GSEA_Cuffdiff', with GSEA results based on Cuffdiff rnk files, and 'GSEA_DESeq' with GSEA results based on DESeq2 rnk files
 
 
 
