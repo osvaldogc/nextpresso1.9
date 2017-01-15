@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 # FileName :
-# Author : Miriam Rubio
-# Description:
+# Author : Osvaldo Graña (a modified version of the one written by Miriam Rubio)
+# v0.2 ene2017 - adds PERL5LIB as argument for fastqscreen
 
 use strict;
 use warnings;
@@ -45,12 +45,22 @@ sub singleFastqc($$$){
 # $outDir: output directory
 # $fastqScreenConf: path to fastqScreen configuration file
 # $subset: number of reads to test
-sub fastqScreen($$$$$$){
-	my($fastqScreenPath,$inputFile,$outDir,$fastQScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen)=@_;
+sub fastqScreen($$$$$$$){
+	my($perl5lib_nextpresso,$fastqScreenPath,$inputFile,$outDir,$fastQScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen)=@_;
 
 	use Env qw(PERL5LIB);
-	my $command="export PERL5LIB=".$PERL5LIB."; ".$fastqScreenPath."fastq_screen ";
+	#my $command="export PERL5LIB=".$PERL5LIB."; ".$fastqScreenPath."fastq_screen ";
 	
+	my $command="";
+	
+	if(defined($PERL5LIB) && $PERL5LIB ne ""){
+		$command.="export PERL5LIB=".$perl5lib_nextpresso.":".$PERL5LIB."; ";
+	}else{
+		$command.="export PERL5LIB=".$perl5lib_nextpresso."; ";
+	}
+	
+	
+	$command.=$fastqScreenPath."fastq_screen ";
 	if($fastqFileIlluminaQualityEncodingForFastqScreen eq "illumina1_3"){
 		$command.="--illumina1_3 ";
 	}

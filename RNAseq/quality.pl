@@ -3,7 +3,8 @@
 # quality.pl
 # Author: Osvaldo Grana
 # Description: quality checks for the samples with fastqc and/or fastqscreen
-# v0.1		mar2014
+# v0.2	ene2017 - adds PERL5LIB as argument for fastqscreen
+# v0.1	mar2014
 
 use strict;
 use FindBin qw($Bin); #finds out script path
@@ -23,7 +24,7 @@ use threads;
 
 sub main();
 sub doFastqc($$$$);
-sub doFastqScreen($$$$$$$);
+sub doFastqScreen($$$$$$$$);
 sub checkThreads($$$);
 sub help();
 
@@ -48,7 +49,7 @@ sub main(){
 	$SIG{__DIE__} =  \&confess;
 	$SIG{__WARN__} = \&confess;
 
-	my($mode,$fastqcPath,$fastqcOutDir,$fastqScreenPath,$fastqScreenOutDir,$samples,$fastqScreenConf,$fastqFileIlluminaQualityEncodingForFastqScreen,$subset);
+	my($mode,$fastqcPath,$fastqcOutDir,$fastqScreenPath,$fastqScreenOutDir,$samples,$fastqScreenConf,$fastqFileIlluminaQualityEncodingForFastqScreen,$subset,$perl5lib);
 	my $nThreads=1;
 	$fastqFileIlluminaQualityEncodingForFastqScreen=""; #no explicit specification for illumina quality encoding
 	undef($mode);
@@ -59,6 +60,7 @@ sub main(){
 	undef($samples);
 	undef($fastqScreenConf);
 	undef($subset);
+	undef($perl5lib);
 	
 	GetOptions(
 		"mode=s"=>\$mode, #string
@@ -70,7 +72,8 @@ sub main(){
 		"nThreads=i"=>\$nThreads,	#integer
 		"fastqScreenConfFile=s"=>\$fastqScreenConf, #string
 		"subset=i"=>\$subset, #integer
-		"fastqFileQualityEncodingForFastqScreen=s"=>\$fastqFileIlluminaQualityEncodingForFastqScreen
+		"fastqFileQualityEncodingForFastqScreen=s"=>\$fastqFileIlluminaQualityEncodingForFastqScreen,
+		"perl5lib=s"=>\$perl5lib
 	);
 
 #	if(!defined($mode) || !defined($samples) || ((!defined($fastqcPath) || !defined($fastqcOutDir)) && (!defined($fastqScreenPath) || !defined($fastqScreenOutDir) || !defined($fastqScreenConf) || !defined($subset))))
@@ -83,11 +86,11 @@ sub main(){
 		doFastqc($fastqcPath,$fastqcOutDir,$samples,$nThreads);		
 	}elsif($mode eq "2"){
 		#fastqc only
-		doFastqScreen($fastqScreenPath,$fastqScreenOutDir,$samples,$nThreads,$fastqScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen);		
+		doFastqScreen($perl5lib,$fastqScreenPath,$fastqScreenOutDir,$samples,$nThreads,$fastqScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen);		
 	}elsif($mode eq "both"){
 		#do both
 		doFastqc($fastqcPath,$fastqcOutDir,$samples,$nThreads);	
-		doFastqScreen($fastqScreenPath,$fastqScreenOutDir,$samples,$nThreads,$fastqScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen);		
+		doFastqScreen($perl5lib,$fastqScreenPath,$fastqScreenOutDir,$samples,$nThreads,$fastqScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen);		
 	}
 	
 		
@@ -232,8 +235,8 @@ sub doFastqc($$$$){
 	
 }
 
-sub doFastqScreen($$$$$$$){
-	my ($fastqScreenPath,$fastqScreenOutDir,$samples,$nThreads,$fastqScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen)=@_;
+sub doFastqScreen($$$$$$$$){
+	my ($perl5lib,$fastqScreenPath,$fastqScreenOutDir,$samples,$nThreads,$fastqScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen)=@_;
 	
 	#looks for fastqScreen
 	if($fastqScreenPath!~ /\/$/){$fastqScreenPath.="/"}
@@ -310,7 +313,7 @@ sub doFastqScreen($$$$$$$){
 				$inputFile=$left;			
 			}
 			
-			$setOfThreads[$i]=threads->create(\&quality::fastqScreen,$fastqScreenPath,$inputFile,$fastqScreenOutDir,$fastqScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen);			
+			$setOfThreads[$i]=threads->create(\&quality::fastqScreen,$perl5lib,$fastqScreenPath,$inputFile,$fastqScreenOutDir,$fastqScreenConf,$subset,$fastqFileIlluminaQualityEncodingForFastqScreen);			
 			
 			$counter++;
 

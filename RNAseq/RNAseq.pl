@@ -250,7 +250,7 @@ sub main(){
 
 	########## level 1: sequencing quality and contamination check ##########		
 	if($level=~ /1/){
-		ExecutionLevels::level_1($fastQCpath,$fastQScreenPath,$fastQScreenConf,$bowtiePath,$experimentName,$workspace,$referenceSequence,
+		ExecutionLevels::level_1($perl5lib,$fastQCpath,$fastQScreenPath,$fastQScreenConf,$bowtiePath,$experimentName,$workspace,$referenceSequence,
 		$GTF,$samples,$logfh,$executionCreatedTempDir,$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep,$fastQScreenSubset,$pairedEnd,$queueSystem,$queueName,$multicore,$queueProject);
 	}
 	

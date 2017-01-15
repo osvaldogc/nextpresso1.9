@@ -284,7 +284,7 @@ sub level_0{
 
 #level 1: analyses sequencing qualities and possible contamination sources
 sub level_1{
-    	my($fastQCpath,$fastQScreenPath,$fastQScreenConf,$bowtiePath,$experimentName,$workspace,$referenceSequence,$GTF,
+    	my($perl5lib,$fastQCpath,$fastQScreenPath,$fastQScreenConf,$bowtiePath,$experimentName,$workspace,$referenceSequence,$GTF,
 	$samples,$logfh,$executionCreatedTempDir,$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep,$subset,$pairedEnd,$queueSystem,$queueName,$multicore,$queueSGEProject)=@_;
 
 
@@ -352,10 +352,10 @@ sub level_1{
 		
 		my $fastqFileQualityEncodingForFastqScreen=""; #="--fastqFileQualityEncodingForFastqScreen illumina1_3";
 		if($fastqFileQualityEncodingForFastqScreen eq ""){
-			$command="perl ".$Bin."quality.pl --mode 2 --nThreads ".$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep." --fastqScreenConfFile ".$fastQScreenConf." --subset ".$subset;
+			$command="perl ".$Bin."quality.pl --mode 2 --nThreads ".$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep." --fastqScreenConfFile ".$fastQScreenConf." --subset ".$subset." --perl5lib ".$perl5lib;
 			$command.=" --fastqScreenPath ".$fastQScreenPath." --fastqScreenOutDir ".$fastQScreenOutputDir." --samples ".$ALLsamples." >> ".$workspace."fastQScreen.log 2>&1";	 
 		}else{
-			$command="perl ".$Bin."quality.pl ".$fastqFileQualityEncodingForFastqScreen." --mode 2 --nThreads ".$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep." --conf ".$fastQScreenConf." --subset ".$subset;
+			$command="perl ".$Bin."quality.pl ".$fastqFileQualityEncodingForFastqScreen." --mode 2 --nThreads ".$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep." --conf ".$fastQScreenConf." --subset ".$subset." --perl5lib ".$perl5lib;
 			$command.=" --fastqScreenPath ".$fastQScreenPath." --fastqScreenOutDir ".$fastQScreenOutputDir." --samples ".$ALLsamples." >> ".$workspace."fastQScreen.log 2>&1";
 		}		
 		print $logfh (Miscellaneous->getCurrentDateAndTime()).$command."\n";
