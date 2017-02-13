@@ -14,7 +14,7 @@
 	<xs:element name="experiment">  		
 		<xs:complexType>
     			<xs:sequence>
-				<xs:element name="library" minOccurs="2" maxOccurs="100">
+				<xs:element name="library" minOccurs="2" maxOccurs="5000">
 					<xs:complexType>
     						<xs:sequence>
 							<xs:element name="rightFile" type="xs:string" minOccurs="0" maxOccurs="1"/>
@@ -70,13 +70,13 @@
 					</xs:complexType>
 				</xs:element>
 				
-				<xs:element name="comparison" minOccurs="0" maxOccurs="50">
+				<xs:element name="comparison" minOccurs="0" maxOccurs="500">
 					<xs:complexType>
     						<xs:sequence>
-							<xs:element name="condition" minOccurs="2" maxOccurs="10">								
+							<xs:element name="condition" minOccurs="2" maxOccurs="100">								
 								<xs:complexType>															
     									<xs:sequence>
-										<xs:element name="libraryName" type="xs:string" minOccurs="1" maxOccurs="10"/>
+										<xs:element name="libraryName" type="xs:string" minOccurs="1" maxOccurs="500"/>
 									</xs:sequence>
 									<xs:attribute name="name" type="xs:string"/>
 									<xs:attribute name="cuffdiffPosition" type="xs:nonNegativeInteger" minOccurs="1" maxOccurs="1"/>
@@ -236,7 +236,7 @@
 				<xs:element name="gsea">
 			  		<xs:complexType>
 						<xs:sequence>
-                            				<xs:element name="geneset" type="xs:string" minOccurs="1" maxOccurs="50"/>
+                            				<xs:element name="geneset" type="xs:string" minOccurs="1" maxOccurs="500"/>
 						</xs:sequence>
 
 
