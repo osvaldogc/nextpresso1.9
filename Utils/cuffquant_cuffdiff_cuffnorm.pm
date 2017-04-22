@@ -15,9 +15,9 @@ use lib "$Bin";
 package cuffquant_cuffdiff_cuffnorm;
 
 sub runCuffquant(){
-	my($extraPathsRequired,$cufflinksPath,$samtoolsPath,$alignmentsDir,$referenceSequence,$samples,$GTF,$library,
-		$cuffquantNThreads,$cuffquantSeed,$cuffquantFragBiasCorrect,$cuffquantMultiReadCorrect,$cuffquantOutDir,$inputFile,$cuffquantMaxBundleFrags,
-		$cuffquant_noEffectiveLengthCorrection,$cuffquant_noLengthCorrection)=@_;
+	my($extraPathsRequired,$cufflinksPath,$samtoolsPath,$alignmentsDir,$referenceSequence,$samples,$GTF,$libraryType,$nThreads,
+		$cuffquantNThreads,$cuffquantSeed,$cuffquantFragBiasCorrect,$cuffquantMultiReadCorrect,$cuffquantOutDir,$cuffquantMaxBundleFrags,
+		$cuffquant_noEffectiveLengthCorrection,$cuffquant_noLengthCorrection,$inputFile)=@_;
 	
 	use Env qw(PATH);
 	#$PATH.=":".$peakAnnotatorPath;
@@ -37,11 +37,11 @@ sub runCuffquant(){
 	$command.="cuffquant -p ".$cuffquantNThreads." ";
 	
 	#posibilities: unstranded, firststrand, secondstrand    
-        if(lc($library) eq "unstranded"){
+        if(lc($libraryType) eq "unstranded"){
                 $command.="--library-type fr-unstranded ";
-        }elsif(lc($library) eq "firststrand"){
+        }elsif(lc($libraryType) eq "firststrand"){
                 $command.="--library-type fr-firststrand ";
-        }elsif(lc($library) eq "secondstrand"){
+        }elsif(lc($libraryType) eq "secondstrand"){
                 $command.="--library-type fr-secondstrand ";
         }
 

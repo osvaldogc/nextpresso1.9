@@ -14,9 +14,9 @@ use lib "$Bin";
 package cufflinks;
 
 sub runCufflinks(){
-	my($extraPathsRequired,$cufflinksPath,$samtoolsPath,$outDir,$alignmentsDir,$referenceSequence,$GTF,$library,
-	$nCufflinksThreads,$fragBiasCorrect,$multiReadCorrect,$inputFile,$libraryNormalizationMethod,$useGTFwithCufflinks,$maxBundleFrags,
-	$noEffectiveLengthCorrection,$noLengthCorrection,$normalization)=@_;
+	my($extraPathsRequired,$cufflinksPath,$samtoolsPath,$outDir,$alignmentsDir,$referenceSequence,$samples,$GTF,
+		$libraryType,$nThreads,$nCufflinksThreads,$fragBiasCorrect,$multiReadCorrect,$libraryNormalizationMethod,$useGTFwithCufflinks,$maxBundleFrags,
+		$noEffectiveLengthCorrection,$noLengthCorrection,$normalization,$inputFile)=@_;
 	
 	use Env qw(PATH);
 	#$PATH.=":".$peakAnnotatorPath;
@@ -36,11 +36,11 @@ sub runCufflinks(){
 	$command.="cufflinks -p ".$nCufflinksThreads." ";
 	
 	 #posibilities: unstranded, firststrand, secondstrand    
-        if(lc($library) eq "unstranded"){
+        if(lc($libraryType) eq "unstranded"){
                 $command.="--library-type fr-unstranded ";
-        }elsif(lc($library) eq "firststrand"){
+        }elsif(lc($libraryType) eq "firststrand"){
                 $command.="--library-type fr-firststrand ";
-        }elsif(lc($library) eq "secondstrand"){
+        }elsif(lc($libraryType) eq "secondstrand"){
                 $command.="--library-type fr-secondstrand ";
         }
 

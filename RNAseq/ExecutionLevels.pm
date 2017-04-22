@@ -458,8 +458,10 @@ sub level_2{
 			#in case of doing trimming and downsampling:
 			#1.downsampling has to wait for trimming, that's way trimmingANDdownsamplingAreWaiting it is read again below
 			#2.tophat has to wait for trimming as well
-			system("cat ".$executionCreatedTempDir."/trimmingANDdownsamplingAreWaiting >> ".$executionCreatedTempDir."/tophatIsWaiting");
-			system("cat ".$executionCreatedTempDir."/trimmingANDdownsamplingAreWaiting >> ".$executionCreatedTempDir."/fastQCANDfastQScreenAreWaiting");			
+			if(-e $executionCreatedTempDir."/trimmingANDdownsamplingAreWaiting"){
+				system("cat ".$executionCreatedTempDir."/trimmingANDdownsamplingAreWaiting >> ".$executionCreatedTempDir."/tophatIsWaiting");
+				system("cat ".$executionCreatedTempDir."/trimmingANDdownsamplingAreWaiting >> ".$executionCreatedTempDir."/fastQCANDfastQScreenAreWaiting");
+			}
 		}
 	
 	}else{
@@ -581,8 +583,9 @@ sub level_2{
 			#tophat has to wait for downsampling
 			queue::executeScript($queueSystem,$queueName,$queueSGEProject,"down".substr($experimentName,0,5),
 			$workspace.$experimentName."_error",$workspace.$experimentName."_error",">>".$executionCreatedTempDir."/tophatIsWaiting",$command,$wait,$multiCFlag);		
-		
-			system("cat ".$executionCreatedTempDir."/tophatIsWaiting >> ".$executionCreatedTempDir."/fastQCANDfastQScreenAreWaiting");
+			if(-e $executionCreatedTempDir."/tophatIsWaiting"){
+				system("cat ".$executionCreatedTempDir."/tophatIsWaiting >> ".$executionCreatedTempDir."/fastQCANDfastQScreenAreWaiting");
+			}
 		}
 		#parsing de ficheros $executionCreatedTempFile con funcion de queue.pm
 		#el wait devuelto por esta funcion entra al nivel 3 como parametro $wait
@@ -914,7 +917,7 @@ sub level_5{
 		$command.=" --cuffquantFragBiasCorrect ".$cuffquantFragBiasCorrect." --cuffquantMultiReadCorrect ".$cuffquantMultiReadCorrect;
 		$command.=" --alignmentsDir ".$alignmentsDir." --samtoolsPath ".$samtoolsPath." --cufflinksPath ".$cufflinksPath;
 		$command.=" --libraryType ".$libraryType." --referenceSequence ".$referenceSequence." --extraPathsRequired ".$extraPathsRequired." --cuffquantMaxBundleFrags ".$cuffquantMaxBundleFrags;
-		$command.=" --cuffquant_noEffectiveLengthCorrection ".$cuffquant_noEffectiveLengthCorrection." --cuffdiffMaxBundleFrags ".$cuffdiffMaxBundleFrags;
+		$command.=" --cuffquant_noEffectiveLengthCorrection ".$cuffquant_noEffectiveLengthCorrection." --cuffquant_noLengthCorrection ".$cuffquant_noLengthCorrection;
 		
 		#if a GTF file is provided or if the user would like to use the GTF file created by cuffmerge
 		if(($GTF ne "") || ($cuffquantUseCuffmergeAssembly eq "true")){
@@ -965,7 +968,7 @@ sub level_5{
 			$command.=" --cuffquantFragBiasCorrect ".$cuffquantFragBiasCorrect." --cuffquantMultiReadCorrect ".$cuffquantMultiReadCorrect;
 			$command.=" --alignmentsDir ".$alignmentsDir." --samtoolsPath ".$samtoolsPath." --cufflinksPath ".$cufflinksPath;
 			$command.=" --libraryType ".$libraryType." --referenceSequence ".$referenceSequence." --extraPathsRequired ".$extraPathsRequired." --cuffquantMaxBundleFrags ".$cuffquantMaxBundleFrags;
-			$command.=" --cuffquant_noEffectiveLengthCorrection ".$cuffquant_noEffectiveLengthCorrection." --cuffdiffMaxBundleFrags ".$cuffdiffMaxBundleFrags;
+			$command.=" --cuffquant_noEffectiveLengthCorrection ".$cuffquant_noEffectiveLengthCorrection." --cuffquant_noLengthCorrection ".$cuffquant_noLengthCorrection;
 			
 			#if a GTF file is provided or if the user would like to use the GTF file created by cuffmerge
 			if(($GTF ne "") || ($cuffquantUseCuffmergeAssembly eq "true")){

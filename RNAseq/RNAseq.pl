@@ -274,7 +274,7 @@ sub main(){
 		
 		#if the size of the hash %auxiliarSamples==0, i.e., none of the samples required trimming => no additional FASTQC is required
 		if(keys(%$auxiliarSamples)>0){
-			ExecutionLevels::level_1($fastQCpath,$fastQScreenPath,$fastQScreenConf,$bowtiePath,$experimentName,$workspace,$referenceSequence,
+			ExecutionLevels::level_1($perl5lib,$fastQCpath,$fastQScreenPath,$fastQScreenConf,$bowtiePath,$experimentName,$workspace,$referenceSequence,
 			$GTF,$auxiliarSamples,$logfh,$executionCreatedTempDir,$maximunNumberOfInstancesAllowedToRunSimultaneouslyInOneParticularStep,$fastQScreenSubset,$pairedEnd,$queueSystem,$queueName,$multicore,$queueProject);
 		}
 

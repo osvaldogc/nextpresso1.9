@@ -133,8 +133,9 @@ sub calculateCorrelationsAndPCA_IsoformLevel($$$){
 }
 
 sub runCufflinks($$$$$$$$$$$$$$$$$$$){
-	my ($extraPathsRequired,$cufflinksPath,$samtoolsPath,$outDir,$alignmentsDir,$referenceSequence,$samples,$GTF,$libraryType,
-	$nThreads,$nCufflinksThreads,$fragBiasCorrect,$multiReadCorrect,$libraryNormalizationMethod,$useGTFwithCufflinks,$maxBundleFrags)=@_;
+	my ($extraPathsRequired,$cufflinksPath,$samtoolsPath,$outDir,$alignmentsDir,$referenceSequence,$samples,$GTF,
+		$libraryType,$nThreads,$nCufflinksThreads,$fragBiasCorrect,$multiReadCorrect,$libraryNormalizationMethod,$useGTFwithCufflinks,$maxBundleFrags,
+		$noEffectiveLengthCorrection,$noLengthCorrection,$normalization)=@_;
 
 	my @files=split(',',$samples);
 	my @libraries=split(',',$libraryType);
@@ -173,8 +174,10 @@ sub runCufflinks($$$$$$$$$$$$$$$$$$$){
 				exit(-1);
 		}				
 		
-		$setOfThreads[$currentThread]=threads->create(\&cufflinks::runCufflinks,$extraPathsRequired,$cufflinksPath,$samtoolsPath,$outDir,$alignmentsDir,
-		$referenceSequence,$GTF,$library,$nCufflinksThreads,$fragBiasCorrect,$multiReadCorrect,$inputFile,$libraryNormalizationMethod,$useGTFwithCufflinks,$maxBundleFrags);		
+		$setOfThreads[$currentThread]=threads->create(\&cufflinks::runCufflinks,
+		$extraPathsRequired,$cufflinksPath,$samtoolsPath,$outDir,$alignmentsDir,$referenceSequence,$samples,$GTF,
+		$libraryType,$nThreads,$nCufflinksThreads,$fragBiasCorrect,$multiReadCorrect,$libraryNormalizationMethod,$useGTFwithCufflinks,$maxBundleFrags,
+		$noEffectiveLengthCorrection,$noLengthCorrection,$normalization,$inputFile);		
 		
 		$currentThread++;
 		$fileNumber++;		

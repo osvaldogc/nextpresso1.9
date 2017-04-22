@@ -165,7 +165,8 @@ sub main(){
 
 sub runCuffquant($$$$$$$$$$$$$$$$$){	
 	my ($extraPathsRequired,$cufflinksPath,$samtoolsPath,$alignmentsDir,$referenceSequence,$samples,$GTF,$libraryType,$nThreads,
-		$cuffquantNThreads,$cuffquantSeed,$cuffquantFragBiasCorrect,$cuffquantMultiReadCorrect,$cuffquantOutDir,$cuffquantMaxBundleFrags)=@_;
+		$cuffquantNThreads,$cuffquantSeed,$cuffquantFragBiasCorrect,$cuffquantMultiReadCorrect,$cuffquantOutDir,$cuffquantMaxBundleFrags,
+		$cuffquant_noEffectiveLengthCorrection,$cuffquant_noLengthCorrection)=@_;
 
 	my @files=split(',',$samples);
 	my @libraries=split(',',$libraryType);
@@ -205,8 +206,9 @@ sub runCuffquant($$$$$$$$$$$$$$$$$){
 		}				
 				
 		$setOfThreads[$currentThread]=threads->create(\&cuffquant_cuffdiff_cuffnorm::runCuffquant,
-		$extraPathsRequired,$cufflinksPath,$samtoolsPath,$alignmentsDir,$referenceSequence,$samples,$GTF,$library,
-		$cuffquantNThreads,$cuffquantSeed,$cuffquantFragBiasCorrect,$cuffquantMultiReadCorrect,$cuffquantOutDir,$inputFile,$cuffquantMaxBundleFrags);		
+		$extraPathsRequired,$cufflinksPath,$samtoolsPath,$alignmentsDir,$referenceSequence,$samples,$GTF,$libraryType,$nThreads,
+		$cuffquantNThreads,$cuffquantSeed,$cuffquantFragBiasCorrect,$cuffquantMultiReadCorrect,$cuffquantOutDir,$cuffquantMaxBundleFrags,
+		$cuffquant_noEffectiveLengthCorrection,$cuffquant_noLengthCorrection,$inputFile);		
 		
 		$currentThread++;
 		$fileNumber++;		
